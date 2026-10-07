@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Toronto parcels — TRREB missing-middle study</title>
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link href="style.css" rel="stylesheet">
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="panel" class="panel" hidden>
+  <button id="panel-close" aria-label="Close">&times;</button>
+  <h2 id="panel-title">—</h2>
+  <div id="panel-sub" class="sub"></div>
+  <dl id="panel-body"></dl>
+</div>
+
+<div class="controls">
+  <div class="block">
+    <label for="colour-by">Colour parcels by</label>
+    <select id="colour-by">
+      <option value="zone" selected>Zone</option>
+      <option value="area_m2">Lot area</option>
+      <option value="frontage_m">Frontage</option>
+      <option value="buildable_width_m">Buildable width</option>
+      <option value="max_coverage_pct">Max lot coverage</option>
+      <option value="max_buildable_footprint_sqft">Buildable footprint</option>
+      <option value="n_units">Units</option>
+    </select>
+  </div>
+  <div class="block">
+    <label class="check"><input type="checkbox" id="show-footprints" checked> Building footprints</label>
+  </div>
+  <div class="block">
+    <div id="legend" class="legend"></div>
+  </div>
+  <p class="note" id="zoom-note">Zoom in to see parcels.</p>
+</div>
+
+<div class="credit">
+  Parcels &amp; footprints: City of Toronto Open Data
+  (<a href="https://open.toronto.ca/open-data-license/">Open Government Licence – Toronto</a>).
+  Setbacks derived from Zoning By-law 569-2013. Study inputs only — not a capacity estimate.
+</div>
+
+<script src="https://unpkg.com/pmtiles@3.0.6/dist/pmtiles.js"></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="config.js" onerror="window.CARTO_API_KEY=''"></script>
+<script src="map.js"></script>
+</body>
+</html>

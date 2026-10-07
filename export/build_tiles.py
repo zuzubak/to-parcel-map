@@ -1,0 +1,142 @@
+"""Build the vector tiles the map reads, from the TRREB project's derived data.
+
+Two PMTiles archives plus a small column dictionary:
+
+  site/data/parcels.pmtiles     413k Toronto parcels in the R/RD/RS/RT/RM zones, carrying the
+                                model inputs the map colours by and shows on click
+  site/data/footprints.pmtiles  428k building footprints, geometry and height only
+  site/data/columns.json        field labels and units, read straight from the TRREB column
+                                dictionary so the two cannot drift
+
+Why tiles at all: the parcels are ~492k polygons and the footprints ~428k. A GeoJSON of the
+parcels alone comes out at 773 MB, which no browser will load. Tiled and served as PMTiles the
+same data is tens of megabytes and the browser fetches only the tiles on screen, over HTTP
+range requests.
+
+Usage:  python export/build_tiles.py [--trreb DIR] [--out DIR]
+"""
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+
+import geopandas as gpd
+import pandas as pd
+
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TRREB = os.path.expanduser("~/projects/TRREB")
+
+# Carried into the parcel tiles. Everything here is either coloured by or shown on click;
+# anything else is dead weight in every tile the browser downloads.
+PARCEL_FIELDS = [
+    "parcel_id", "address", "zone",
+    "frontage_m", "depth_m", "area_m2",
+    "front_setback_m", "side_setback_m", "rear_setback_m",
+    "buildable_width_m", "depth_available_m",
+    "max_coverage_pct", "coverage_cap_m2",
+    "corner_lot", "lane_access", "on_major_street",
+    # capacity, from Noam's 2026-10-05 parameters
+    "building_depth_m", "rear_remaining_m", "max_buildable_footprint_sqft",
+    "garden_suite_storeys", "unit_type", "n_units",
+]
+ROUND_1DP = ["frontage_m", "depth_m", "front_setback_m", "side_setback_m", "rear_setback_m",
+             "buildable_width_m", "depth_available_m", "building_depth_m", "rear_remaining_m"]
+ROUND_0DP = ["area_m2", "coverage_cap_m2", "max_buildable_footprint_sqft"]
+
+
+def log(m):
+    print(m, file=sys.stderr, flush=True)
+
+
+def tippecanoe(src, out, layer, minzoom, maxzoom, extra=()):
+    cmd = ["tippecanoe", "-o", out, "-l", layer, "-Z", str(minzoom), "-z", str(maxzoom),
+           "--drop-densest-as-needed", "--extend-zooms-if-still-dropping",
+           "--force", *extra, src]
+    log("  " + " ".join(cmd[:9]) + " ...")
+    subprocess.run(cmd, check=True)
+    log(f"  -> {out}  {os.path.getsize(out) / 1e6:.0f} MB")
+
+
+def write_ndjson(gdf, path):
+    """Newline-delimited GeoJSON: tippecanoe reads it streaming, so neither side holds the
+    whole layer in memory."""
+    gdf.to_file(path, driver="GeoJSONSeq")
+    return path
+
+
+def build_parcels(trreb, tmp, out_dir):
+    log("parcels")
+    attrs = pd.read_csv(os.path.join(trreb, "data/derived/toronto_model_inputs.csv"),
+                        low_memory=False)
+    log(f"  {len(attrs):,} modelled parcels in the attribute table")
+
+    geom = gpd.read_file(os.path.join(trreb, "data/derived/lots/toronto.gpkg"))
+    geom = geom[geom.geometry.notna()][["PARCELI2", "geometry"]].rename(
+        columns={"PARCELI2": "parcel_id"})
+    log(f"  {len(geom):,} parcel geometries")
+
+    g = geom.merge(attrs[PARCEL_FIELDS], on="parcel_id", how="inner")
+    log(f"  {len(g):,} joined")
+
+    for c in ROUND_1DP:
+        g[c] = g[c].round(1)
+    for c in ROUND_0DP:
+        g[c] = g[c].round(0)
+    # booleans ride as plain 0/1 ints -- fiona cannot serialise pandas' nullable Int8,
+    # and "True"/"False" strings would bloat every tile
+    for c in ["corner_lot", "lane_access", "on_major_street"]:
+        g[c] = g[c].fillna(False).astype(bool).astype("int32")
+
+    src = write_ndjson(g.to_crs(4326), os.path.join(tmp, "parcels.geojsonl"))
+    tippecanoe(src, os.path.join(out_dir, "parcels.pmtiles"), "parcels", 11, 16)
+
+
+def build_footprints(trreb, tmp, out_dir):
+    log("footprints")
+    f = gpd.read_file(os.path.join(
+        trreb, "data/raw/footprints/toronto_footprints_3dmassing_2025.gpkg"))
+    f = f[f.geometry.notna()]
+    keep = ["AVG_HEIGHT"] if "AVG_HEIGHT" in f.columns else []
+    f = f[keep + ["geometry"]].rename(columns={"AVG_HEIGHT": "height_m"})
+    if "height_m" in f.columns:
+        f["height_m"] = pd.to_numeric(f.height_m, errors="coerce").round(1)
+    log(f"  {len(f):,} footprints")
+
+    src = write_ndjson(f.to_crs(4326), os.path.join(tmp, "footprints.geojsonl"))
+    tippecanoe(src, os.path.join(out_dir, "footprints.pmtiles"), "footprints", 13, 16)
+
+
+def build_columns(trreb, out_dir):
+    """Field labels for the detail panel, lifted from the TRREB dictionary so the map and the
+    data documentation stay in step."""
+    sys.path.insert(0, os.path.join(trreb, "scripts"))
+    from columns import COLUMNS  # noqa: E402
+
+    by_name = {n: {"label": n, "unit": u, "desc": d} for n, _, u, d, _ in COLUMNS}
+    out = {c: by_name.get(c, {"label": c, "unit": "", "desc": ""}) for c in PARCEL_FIELDS}
+    p = os.path.join(out_dir, "columns.json")
+    json.dump(out, open(p, "w"), indent=1)
+    log(f"columns.json -> {len(out)} fields")
+
+
+def main(trreb, out_dir):
+    if not shutil.which("tippecanoe"):
+        sys.exit("tippecanoe not found: brew install tippecanoe")
+    os.makedirs(out_dir, exist_ok=True)
+    with tempfile.TemporaryDirectory() as tmp:
+        build_parcels(trreb, tmp, out_dir)
+        build_footprints(trreb, tmp, out_dir)
+    build_columns(trreb, out_dir)
+    for f in sorted(os.listdir(out_dir)):
+        log(f"  {os.path.getsize(os.path.join(out_dir, f)) / 1e6:8.1f} MB  {f}")
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--trreb", default=TRREB)
+    ap.add_argument("--out", default=os.path.join(HERE, "site", "data"))
+    a = ap.parse_args()
+    main(a.trreb, a.out)

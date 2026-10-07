@@ -1,0 +1,54 @@
+name: Deploy parcel map
+
+# No schedule, unlike to-multiplex-map. The tiles are built from a static snapshot of the
+# TRREB study data and committed to the repo, so there is nothing to refresh on a timer --
+# rebuild locally with `python export/build_tiles.py` and push when the data changes.
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tiles are present
+        run: |
+          for f in site/data/parcels.pmtiles site/data/footprints.pmtiles; do
+            [ -f "$f" ] || { echo "::error::$f is missing — run export/build_tiles.py and commit it"; exit 1; }
+          done
+          ls -lh site/data
+
+      # config.js is gitignored, so the deployed copy is written here from the secret.
+      # Without it the map falls back to plain OpenStreetMap raster tiles.
+      - name: Write basemap config
+        env:
+          CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
+        run: |
+          if [ -z "$CARTO_API_KEY" ]; then
+            echo "::warning::CARTO_API_KEY not set; falling back to OpenStreetMap raster tiles."
+          fi
+          echo "window.CARTO_API_KEY = \"$CARTO_API_KEY\";" > site/config.js
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

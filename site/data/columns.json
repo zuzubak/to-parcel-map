@@ -1,0 +1,112 @@
+{
+ "parcel_id": {
+  "label": "parcel_id",
+  "unit": "",
+  "desc": "City of Toronto parcel identifier. Unique per parcel; the key to join back to source data."
+ },
+ "address": {
+  "label": "address",
+  "unit": "",
+  "desc": "Municipal address. Toronto's parcel layer carries no address, so this is matched spatially: an address point inside the parcel, else the nearest within 20 m. Blank on 0.2%."
+ },
+ "zone": {
+  "label": "zone",
+  "unit": "",
+  "desc": "Zone symbol: RD detached, RS semi-detached, RT townhouse, RM multiple, R residential, plus commercial and other zones where the shape filter caught them. Blank on 7%."
+ },
+ "frontage_m": {
+  "label": "frontage_m",
+  "unit": "m",
+  "desc": "Lot width at the street. The side of the parcel's minimum rotated rectangle that runs within 45 degrees of the nearest road centreline."
+ },
+ "depth_m": {
+  "label": "depth_m",
+  "unit": "m",
+  "desc": "The other side of that rectangle."
+ },
+ "area_m2": {
+  "label": "area_m2",
+  "unit": "m2",
+  "desc": "True polygon area, not frontage x depth."
+ },
+ "front_setback_m": {
+  "label": "front_setback_m",
+  "unit": "m",
+  "desc": "Required front yard under the averaging rule 10.5.40.70(1): match or average the abutting buildings within 15 m fronting the same street, with 6.0 m as fallback. Populated on all rows. Median 6.4 m."
+ },
+ "side_setback_m": {
+  "label": "side_setback_m",
+  "unit": "m",
+  "desc": "Required side yard, houseplex rates. R and RT 0.9 m; RD banded on req_frontage_m from 0.6 to 3.0 m; RS banded 0.6 to 1.5 m; RM 1.2 m. Blank in non-residential zones."
+ },
+ "rear_setback_m": {
+  "label": "rear_setback_m",
+  "unit": "m",
+  "desc": "Required rear yard. R and RT a flat 7.5 m; RD, RS and RM the greater of 7.5 m or 25% of lot depth."
+ },
+ "buildable_width_m": {
+  "label": "buildable_width_m",
+  "unit": "m",
+  "desc": "frontage_m minus two side yards. The width available to a building. Does not yet account for the wider flankage setback on corner lots."
+ },
+ "depth_available_m": {
+  "label": "depth_available_m",
+  "unit": "m",
+  "desc": "depth_m minus the front and rear yards: the depth available to the MAIN building. The rear yard has already been taken out, and that is where a garden suite goes -- the two do not compete for this space. Sizing a garden suite needs the rear yard left once the main building is placed, which waits on Noam's building depth (17 or 19 m)."
+ },
+ "max_coverage_pct": {
+  "label": "max_coverage_pct",
+  "unit": "%",
+  "desc": "Maximum share of the lot any building may cover. AN OVERLAY: only 46% of residential lots have one. Where blank the limit comes from the by-law chapter default, which is not published as GIS and is still outstanding."
+ },
+ "coverage_cap_m2": {
+  "label": "coverage_cap_m2",
+  "unit": "m2",
+  "desc": "area_m2 x max_coverage_pct. Blank wherever coverage is."
+ },
+ "corner_lot": {
+  "label": "corner_lot",
+  "unit": "true/false",
+  "desc": "Abuts two or more streets, excluding laneways. Corner lots take a wider flankage setback. 4% of residential lots."
+ },
+ "lane_access": {
+  "label": "lane_access",
+  "unit": "true/false",
+  "desc": "Abuts a laneway. Separate from corner_lot: a lane at the rear is access, not a corner, and it is what makes a laneway suite possible. 14% of residential lots."
+ },
+ "on_major_street": {
+  "label": "on_major_street",
+  "unit": "true/false",
+  "desc": "Within 30 m of a Major Street. Major Streets switch townhouses and apartments to a different setback regime (window-dependent side yards), not yet modelled. 5% of lots."
+ },
+ "building_depth_m": {
+  "label": "building_depth_m",
+  "unit": "m",
+  "desc": "Depth of the main building: the lesser of the depth between the front and rear yards and the depth at which the footprint reaches 1,400 sq ft. Shortened further where a lot coverage cap binds."
+ },
+ "rear_remaining_m": {
+  "label": "rear_remaining_m",
+  "unit": "m",
+  "desc": "Space left between the back of the main building and the rear setback. This is what a garden suite has to fit into."
+ },
+ "max_buildable_footprint_sqft": {
+  "label": "max_buildable_footprint_sqft",
+  "unit": "sq ft",
+  "desc": "The same footprint in square feet."
+ },
+ "garden_suite_storeys": {
+  "label": "garden_suite_storeys",
+  "unit": "storeys",
+  "desc": "0, 1 or 2. One storey needs 9 m of rear space, two storeys 12.5 m. A garden suite does not count against lot coverage."
+ },
+ "unit_type": {
+  "label": "unit_type",
+  "unit": "",
+  "desc": "Bachelor through 4 bed, from the architect's size bands. The bands overlap, so a floor is typed as the largest band its area reaches."
+ },
+ "n_units": {
+  "label": "n_units",
+  "unit": "units",
+  "desc": "n_units_main plus one where a garden suite fits."
+ }
+}
