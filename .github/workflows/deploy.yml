@@ -50,5 +50,11 @@ jobs:
         with:
           path: site
 
+      # deploy-pages reads the artifact back through the API, and on a 140 MB upload the
+      # metadata is not always visible the instant the upload finishes -- a deploy failed
+      # with "Found 0 artifact(s)" 280 ms after a successful finalize. Give it a moment.
+      - name: Let the artifact settle
+        run: sleep 20
+
       - id: deployment
         uses: actions/deploy-pages@v4
