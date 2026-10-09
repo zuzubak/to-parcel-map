@@ -17,7 +17,7 @@
  "frontage_m": {
   "label": "frontage_m",
   "unit": "m",
-  "desc": "Lot width at the street. The side of the parcel's minimum rotated rectangle that runs within 45 degrees of the nearest road centreline."
+  "desc": "Lot width at the street: the side of the parcel's minimum rotated rectangle facing the centreline segment the address sits on. Measuring against the nearest centreline of any kind instead put lots with a rear or side laneway the wrong way round, and took the flanking street on corner lots."
  },
  "depth_m": {
   "label": "depth_m",
