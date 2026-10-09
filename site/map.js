@@ -156,8 +156,8 @@
     ["depth_available_m", "Depth available (m)"],
     ["max_coverage_pct", "Max coverage (%)"],
     ["coverage_cap_m2", "Coverage cap (m²)"],
-    ["build_path", "Build path"],
-    ["new_build_viable", "New build viable"],
+    // build_path and new_build_viable are still in the tiles and still drive the model --
+    // only hidden from the panel for now, to go back in later
     ["existing_footprint_sqft", "Existing footprint (sq ft)"],
     ["building_depth_m", "Building depth (m)"],
     ["max_buildable_footprint_sqft", "Max footprint (sq ft)"],
