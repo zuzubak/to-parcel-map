@@ -40,8 +40,7 @@
     frontage_m:        { label: "Frontage",          unit: "m",  breaks: [6, 9, 12, 15, 18] },
     buildable_width_m: { label: "Buildable width",   unit: "m",  breaks: [4, 6, 8, 11, 14] },
     max_coverage_pct:  { label: "Max lot coverage",  unit: "%",  breaks: [30, 33, 35, 40, 45] },
-    max_buildable_footprint_sqft:
-                       { label: "Buildable footprint", unit: "sq ft",
+    ground_floor_sqft: { label: "Ground floor footprint", unit: "sq ft",
                          breaks: [400, 700, 950, 1200, 1399] },
     n_units:           { label: "Units",             unit: "",   breaks: [1, 4, 5] },
     garden_suite_storeys:
@@ -62,6 +61,29 @@
   ]);
   const scaled = (field, v) => (TENTHS.has(field) ? v * 10 : v);      // real -> stored
   const unscale = (field, v) => (TENTHS.has(field) ? v / 10 : v);     // stored -> real
+
+  // Four panel fields are rebuilt here instead of riding in the tiles, which keeps the
+  // parcel file under GitHub's 100 MiB. Each is an exact reconstruction, computed from the
+  // same rounded inputs scripts/toronto_capacity.py uses, so the panel still matches the
+  // spreadsheet. MIN_VIABLE_SQFT and the 60 m2 cap mirror that file.
+  const MIN_VIABLE_SQFT = 325;
+  const GARDEN_SUITE_MAX_SQFT = 60 * 10.7639;
+  const DERIVED = {
+    total_gfa_sqft: p => {
+      const g = num(p.ground_floor_sqft), u = num(p.upper_floor_sqft);
+      if (g === null || u === null) return null;
+      return (g >= MIN_VIABLE_SQFT ? 2 * g : 0) + (u >= MIN_VIABLE_SQFT ? 2 * u : 0);
+    },
+    garden_suite_sqft: p => {
+      if (!Number(p.garden_suite_storeys)) return 0;
+      const w = num(p.buildable_width_m), r = num(p.rear_remaining_m);
+      if (w === null || r === null) return null;
+      return Math.round(Math.min(GARDEN_SUITE_MAX_SQFT, Math.max(0, (w / 10) * (r / 10) * 10.7639)));
+    },
+  };
+  function num(v) {
+    return v === undefined || v === null || v === "" ? null : Number(v);
+  }
 
   let map, columns = {}, selectedId = null;
 
@@ -140,7 +162,8 @@
     lane_access: YESNO,
     on_major_street: YESNO,
     attached: YESNO,
-    new_build_viable: YESNO,
+    stepped_in: YESNO,
+    sixplex_eligible: YESNO,
   };
   const PANEL_FIELDS = [
     ["zone", "Zone"],
@@ -149,21 +172,24 @@
     ["area_m2", "Lot area (m²)"],
     ["front_setback_m", "Front setback (m)"],
     ["side_setback_m", "Side setback (m)"],
-    ["side_yards_counted", "Side yards counted"],
     ["attached", "Attached / party wall"],
     ["rear_setback_m", "Rear setback (m)"],
     ["buildable_width_m", "Buildable width (m)"],
     ["depth_available_m", "Depth available (m)"],
     ["max_coverage_pct", "Max coverage (%)"],
     ["coverage_cap_m2", "Coverage cap (m²)"],
-    // build_path and new_build_viable are still in the tiles and still drive the model --
-    // only hidden from the panel for now, to go back in later
-    ["existing_footprint_sqft", "Existing footprint (sq ft)"],
+    // build_path and new_build_viable still drive the model but are out of the panel and
+    // out of the tiles for now, to go back in later
     ["building_depth_m", "Building depth (m)"],
-    ["max_buildable_footprint_sqft", "Max footprint (sq ft)"],
-    ["unit_type", "Unit type"],
+    ["ground_floor_sqft", "Ground floor (sq ft)"],
+    ["upper_floor_sqft", "Upper floors (sq ft)"],
+    ["stepped_in", "Upper floors stepped in"],
+    ["total_gfa_sqft", "Total floor area (sq ft)"],
+    ["sixplex_eligible", "Five/six units permitted"],
+    ["unit_type", "Average unit type"],
     ["rear_remaining_m", "Rear space left (m)"],
     ["garden_suite_storeys", "Garden suite storeys"],
+    ["garden_suite_sqft", "Garden suite (sq ft)"],
     ["n_units", "Units"],
     ["corner_lot", "Corner lot"],
     ["lane_access", "Lane access"],
@@ -176,7 +202,7 @@
     const dl = document.getElementById("panel-body");
     dl.innerHTML = "";
     for (const [key, label] of PANEL_FIELDS) {
-      const raw = props[key];
+      const raw = DERIVED[key] ? DERIVED[key](props) : props[key];
       let v;
       if (raw === undefined || raw === null || raw === "") {
         v = key === "max_coverage_pct" || key === "coverage_cap_m2" ? "no limit" : "—";

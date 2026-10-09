@@ -84,45 +84,40 @@
   "unit": "true/false",
   "desc": "The building on the lot shares a party wall with its neighbour, or the zone is RS. Detected where one 3D Massing footprint spans two or more parcels. An attached building has one side yard, not two."
  },
- "side_yards_counted": {
-  "label": "side_yards_counted",
-  "unit": "count",
-  "desc": "How many side yards came off the frontage: 2 for a detached building, 1 where attached."
- },
- "build_path": {
-  "label": "build_path",
-  "unit": "",
-  "desc": "'new build' where a fresh building on the setback envelope beats what is already there; 'conversion' where the existing building is larger and 10.5.20.40 lets it be converted to a fourplex keeping its existing setbacks; 'neither' where no path yields a unit."
- },
- "new_build_viable": {
-  "label": "new_build_viable",
-  "unit": "true/false",
-  "desc": "The buildable width reaches the 5.5 m minimum, so a new building could hold a decent unit. Narrower lots can only be converted. An assumption, not by-law."
- },
- "existing_footprint_sqft": {
-  "label": "existing_footprint_sqft",
-  "unit": "sq ft",
-  "desc": "The same footprint in square feet."
- },
  "building_depth_m": {
   "label": "building_depth_m",
   "unit": "m",
-  "desc": "Depth of the building this parcel ends up with. On a new build, the depth that reaches a 900 sq ft footprint, held between 10 and 19 m and never past the rear yard, then shortened where the 1,400 sq ft cap or a lot coverage cap binds. On a conversion, the existing building's depth. The 900 sq ft target and the 10 m floor are assumptions, not by-law."
+  "desc": "Depth of the building this parcel ends up with. On a new build, the depth that reaches a 975 sq ft footprint, held between 10 and 19 m and never past the rear yard, then shortened where the 1,400 sq ft cap or a lot coverage cap binds. On a conversion, the existing building's depth. The 900 sq ft target and the 10 m floor are assumptions, not by-law."
  },
  "rear_remaining_m": {
   "label": "rear_remaining_m",
   "unit": "m",
   "desc": "depth_available_m minus building_depth_m: the space left between the back of the building and the rear setback. This is what a garden suite has to fit into, and on a conversion the existing building's depth comes off it just as a new one's would."
  },
- "max_buildable_footprint_sqft": {
-  "label": "max_buildable_footprint_sqft",
+ "ground_floor_sqft": {
+  "label": "ground_floor_sqft",
   "unit": "sq ft",
-  "desc": "The same footprint in square feet."
+  "desc": "Footprint of the ground floor, and of the basement under it. On a conversion this is the existing building; on a new build it is the setback envelope."
+ },
+ "upper_floor_sqft": {
+  "label": "upper_floor_sqft",
+  "unit": "sq ft",
+  "desc": "Footprint of the two floors above. Equal to the ground floor except on a wide conversion, where it is the as-of-right envelope instead."
+ },
+ "stepped_in": {
+  "label": "stepped_in",
+  "unit": "true/false",
+  "desc": "A conversion on a lot at or above 7.6 m wide, where the upper floors cannot carry the existing walls straight up and step back to the as-of-right envelope instead."
  },
  "garden_suite_storeys": {
   "label": "garden_suite_storeys",
   "unit": "storeys",
-  "desc": "0, 1 or 2. One storey needs 9 m of rear space, two storeys 12.5 m. A garden suite does not count against lot coverage."
+  "desc": "0, 1 or 2. One storey needs 9 m of rear space, two storeys 12.5 m. A garden suite does not count against lot coverage, and counts as one unit whichever its height."
+ },
+ "sixplex_eligible": {
+  "label": "sixplex_eligible",
+  "unit": "true/false",
+  "desc": "Five or six units are permitted: the lot is in one of the nine wards of OPA 818 / By-law 654-2025 (the Toronto and East York District plus Ward 23) AND the building is detached, which the by-law requires. 10.7% of parcels."
  },
  "unit_type": {
   "label": "unit_type",
@@ -133,5 +128,15 @@
   "label": "n_units",
   "unit": "units",
   "desc": "n_units_main plus one where a garden suite fits."
+ },
+ "total_gfa_sqft": {
+  "label": "total_gfa_sqft",
+  "unit": "sq ft",
+  "desc": "Floor area of the main building across all four levels that hold a unit."
+ },
+ "garden_suite_sqft": {
+  "label": "garden_suite_sqft",
+  "unit": "sq ft",
+  "desc": "Footprint of the garden suite: the rear yard it has to sit in, capped at 60 m2. 0 where none fits."
  }
 }

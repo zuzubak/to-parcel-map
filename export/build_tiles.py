@@ -38,11 +38,16 @@ PARCEL_FIELDS = [
     "buildable_width_m", "depth_available_m",
     "max_coverage_pct", "coverage_cap_m2",
     "corner_lot", "lane_access", "on_major_street",
-    "attached", "side_yards_counted",
-    # capacity, from Noam's 2026-10-05 parameters
-    "build_path", "new_build_viable", "existing_footprint_sqft",
-    "building_depth_m", "rear_remaining_m", "max_buildable_footprint_sqft",
-    "garden_suite_storeys", "unit_type", "n_units",
+    "attached",
+    # capacity. build_path, new_build_viable and side_yards_counted are deliberately out:
+    # they are hidden from the panel and the file is 1 MiB under GitHub's 100 MiB limit.
+    # max_buildable_footprint_sqft (identical to ground_floor_sqft), total_gfa_sqft,
+    # garden_suite_sqft and existing_footprint_sqft are all left out and rebuilt in the
+    # browser: each numeric field costs about 4 MiB across six zoom levels, and the file
+    # has to stay under GitHub's 100 MiB.
+    "building_depth_m", "rear_remaining_m",
+    "ground_floor_sqft", "upper_floor_sqft", "stepped_in",
+    "garden_suite_storeys", "sixplex_eligible", "unit_type", "n_units",
 ]
 # Every numeric field rides as an integer. A double costs 8 bytes in every tile a feature
 # appears in, across six zoom levels and half a million parcels; a small varint costs one or
@@ -52,10 +57,10 @@ PARCEL_FIELDS = [
 TENTHS = ["frontage_m", "depth_m", "front_setback_m", "side_setback_m", "rear_setback_m",
           "buildable_width_m", "depth_available_m", "building_depth_m", "rear_remaining_m",
           "max_coverage_pct"]   # 42.5% is a real value on three parcels
-WHOLE = ["area_m2", "coverage_cap_m2", "max_buildable_footprint_sqft",
-         "existing_footprint_sqft",
-         "side_yards_counted", "garden_suite_storeys", "n_units"]
-BOOLS = ["corner_lot", "lane_access", "on_major_street", "attached", "new_build_viable"]
+WHOLE = ["area_m2", "coverage_cap_m2", "ground_floor_sqft", "upper_floor_sqft",
+         "garden_suite_storeys", "n_units"]
+BOOLS = ["corner_lot", "lane_access", "on_major_street", "attached",
+         "stepped_in", "sixplex_eligible"]
 
 
 def log(m):
@@ -141,7 +146,11 @@ def build_columns(trreb, out_dir):
     from columns import COLUMNS  # noqa: E402
 
     by_name = {n: {"label": n, "unit": u, "desc": d} for n, _, u, d, _ in COLUMNS}
-    out = {c: by_name.get(c, {"label": c, "unit": "", "desc": ""}) for c in PARCEL_FIELDS}
+    # the fields the browser reconstructs are not in the tiles but are in the panel, so
+    # they still need their labels and descriptions
+    DERIVED_IN_PANEL = ["total_gfa_sqft", "garden_suite_sqft"]
+    out = {c: by_name.get(c, {"label": c, "unit": "", "desc": ""})
+           for c in list(PARCEL_FIELDS) + DERIVED_IN_PANEL}
     p = os.path.join(out_dir, "columns.json")
     json.dump(out, open(p, "w"), indent=1)
     log(f"columns.json -> {len(out)} fields")
