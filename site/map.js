@@ -40,7 +40,7 @@
     frontage_m:        { label: "Frontage",          unit: "m",  breaks: [6, 9, 12, 15, 18] },
     buildable_width_m: { label: "Buildable width",   unit: "m",  breaks: [4, 6, 8, 11, 14] },
     max_coverage_pct:  { label: "Max lot coverage",  unit: "%",  breaks: [30, 33, 35, 40, 45] },
-    ground_floor_sqft: { label: "Ground floor footprint", unit: "sq ft",
+    ground_floor_sqft: { label: "Floor plate", unit: "sq ft",
                          breaks: [400, 700, 950, 1200, 1399] },
     n_units:           { label: "Units",             unit: "",   breaks: [1, 4, 5] },
     garden_suite_storeys:
@@ -70,9 +70,9 @@
   const GARDEN_SUITE_MAX_SQFT = 60 * 10.7639;
   const DERIVED = {
     total_gfa_sqft: p => {
-      const g = num(p.ground_floor_sqft), u = num(p.upper_floor_sqft);
-      if (g === null || u === null) return null;
-      return (g >= MIN_VIABLE_SQFT ? 2 * g : 0) + (u >= MIN_VIABLE_SQFT ? 2 * u : 0);
+      const g = num(p.ground_floor_sqft);
+      if (g === null) return null;
+      return g >= MIN_VIABLE_SQFT ? 4 * g : 0;   // every level is the ground floor for now
     },
     garden_suite_sqft: p => {
       if (!Number(p.garden_suite_storeys)) return 0;
@@ -162,7 +162,6 @@
     lane_access: YESNO,
     on_major_street: YESNO,
     attached: YESNO,
-    stepped_in: YESNO,
     sixplex_eligible: YESNO,
   };
   const PANEL_FIELDS = [
@@ -181,9 +180,7 @@
     // build_path and new_build_viable still drive the model but are out of the panel and
     // out of the tiles for now, to go back in later
     ["building_depth_m", "Building depth (m)"],
-    ["ground_floor_sqft", "Ground floor (sq ft)"],
-    ["upper_floor_sqft", "Upper floors (sq ft)"],
-    ["stepped_in", "Upper floors stepped in"],
+    ["ground_floor_sqft", "Floor plate (sq ft)"],
     ["total_gfa_sqft", "Total floor area (sq ft)"],
     ["sixplex_eligible", "Five/six units permitted"],
     ["unit_type", "Average unit type"],

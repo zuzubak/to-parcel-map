@@ -46,7 +46,7 @@ PARCEL_FIELDS = [
     # browser: each numeric field costs about 4 MiB across six zoom levels, and the file
     # has to stay under GitHub's 100 MiB.
     "building_depth_m", "rear_remaining_m",
-    "ground_floor_sqft", "upper_floor_sqft", "stepped_in",
+    "ground_floor_sqft",
     "garden_suite_storeys", "sixplex_eligible", "unit_type", "n_units",
 ]
 # Every numeric field rides as an integer. A double costs 8 bytes in every tile a feature
@@ -57,10 +57,9 @@ PARCEL_FIELDS = [
 TENTHS = ["frontage_m", "depth_m", "front_setback_m", "side_setback_m", "rear_setback_m",
           "buildable_width_m", "depth_available_m", "building_depth_m", "rear_remaining_m",
           "max_coverage_pct"]   # 42.5% is a real value on three parcels
-WHOLE = ["area_m2", "coverage_cap_m2", "ground_floor_sqft", "upper_floor_sqft",
+WHOLE = ["area_m2", "coverage_cap_m2", "ground_floor_sqft",
          "garden_suite_storeys", "n_units"]
-BOOLS = ["corner_lot", "lane_access", "on_major_street", "attached",
-         "stepped_in", "sixplex_eligible"]
+BOOLS = ["corner_lot", "lane_access", "on_major_street", "attached", "sixplex_eligible"]
 
 
 def log(m):

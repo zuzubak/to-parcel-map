@@ -72,7 +72,7 @@
  "lane_access": {
   "label": "lane_access",
   "unit": "true/false",
-  "desc": "Abuts a laneway. Separate from corner_lot: a lane at the rear is access, not a corner, and it is what makes a laneway suite possible. 14% of residential lots."
+  "desc": "A laneway centreline runs within 6 m of the lot boundary, which for a 4.5 to 6 m lane means it abuts. Separate from corner_lot: a lane at the rear is access, not a corner. Tested at 20 m before, which caught lanes serving the opposite side of the street."
  },
  "on_major_street": {
   "label": "on_major_street",
@@ -97,17 +97,7 @@
  "ground_floor_sqft": {
   "label": "ground_floor_sqft",
   "unit": "sq ft",
-  "desc": "Footprint of the ground floor, and of the basement under it. On a conversion this is the existing building; on a new build it is the setback envelope."
- },
- "upper_floor_sqft": {
-  "label": "upper_floor_sqft",
-  "unit": "sq ft",
-  "desc": "Footprint of the two floors above. Equal to the ground floor except on a wide conversion, where it is the as-of-right envelope instead."
- },
- "stepped_in": {
-  "label": "stepped_in",
-  "unit": "true/false",
-  "desc": "A conversion on a lot at or above 7.6 m wide, where the upper floors cannot carry the existing walls straight up and step back to the as-of-right envelope instead."
+  "desc": "Footprint of every floor. On a conversion this is the existing building; on a new build it is the setback envelope. The step-back on wide conversions -- upper floors pulling in to the as-of-right envelope -- is switched off pending Noam, so all four levels are taken at this area."
  },
  "garden_suite_storeys": {
   "label": "garden_suite_storeys",
@@ -132,7 +122,7 @@
  "total_gfa_sqft": {
   "label": "total_gfa_sqft",
   "unit": "sq ft",
-  "desc": "Floor area of the main building across all four levels that hold a unit."
+  "desc": "Floor area of the main building across the levels that hold a unit, each at ground_floor_sqft."
  },
  "garden_suite_sqft": {
   "label": "garden_suite_sqft",
