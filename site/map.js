@@ -23,6 +23,11 @@
     RS: "#f28e2b",   // semi-detached
     RT: "#edc948",   // townhouse
   };
+  const PATH_COLOURS = {
+    "conversion": "#4e79a7",   // keep the building that is there
+    "new build":  "#e15759",   // tear down and rebuild on the envelope
+    "neither":    "#8c8c8c",   // no path yields a unit
+  };
   const NO_DATA = "#d9d9d9";
 
   // Sequential ramp, matching the one used across the other maps on the site.
@@ -39,30 +44,50 @@
                        { label: "Buildable footprint", unit: "sq ft",
                          breaks: [400, 700, 950, 1200, 1399] },
     n_units:           { label: "Units",             unit: "",   breaks: [1, 4, 5] },
+    garden_suite_storeys:
+                       { label: "Garden suite storeys", unit: "", breaks: [1, 2] },
   };
+  const CATEGORICAL = {
+    zone: { field: "zone", colours: ZONE_COLOURS, label: "Zone" },
+    build_path: { field: "build_path", colours: PATH_COLOURS, label: "Build path" },
+  };
+
+  // Numeric attributes travel as integers to keep the tiles small, and these ones were
+  // multiplied by 10 on the way in: 18.6 m arrives as 186. export/build_tiles.py has the
+  // matching list. Everything reading an attribute goes through scaled() or unscale().
+  const TENTHS = new Set([
+    "frontage_m", "depth_m", "front_setback_m", "side_setback_m", "rear_setback_m",
+    "buildable_width_m", "depth_available_m", "building_depth_m", "rear_remaining_m",
+    "max_coverage_pct",
+  ]);
+  const scaled = (field, v) => (TENTHS.has(field) ? v * 10 : v);      // real -> stored
+  const unscale = (field, v) => (TENTHS.has(field) ? v / 10 : v);     // stored -> real
 
   let map, columns = {}, selectedId = null;
 
   // ---------------------------------------------------------------- styling expressions
 
-  function zoneExpression() {
-    const m = ["match", ["get", "zone"]];
-    for (const [z, c] of Object.entries(ZONE_COLOURS)) m.push(z, c);
+  function matchExpression(field) {
+    const m = ["match", ["get", field]];
+    for (const [k, c] of Object.entries(CATEGORICAL[field].colours)) m.push(k, c);
     m.push(NO_DATA);
     return m;
   }
 
   function stepExpression(field) {
     const s = SCALES[field];
-    const e = ["step", ["to-number", ["get", field], -1], NO_DATA];
-    s.breaks.forEach((b, i) => e.push(b, RAMP[i + 1] || RAMP[RAMP.length - 1]));
-    // anything below the first break but still a real number
-    e[2] = RAMP[0];
-    return e;
+    // The step's own default is the lightest ramp colour -- anything below the first break
+    // but still a real number. A missing attribute has to be told apart from a low value,
+    // which "step" alone cannot do, so the null test is outside it: on max_coverage_pct
+    // absence means the by-law applies no coverage limit, which is a finding, not a gap.
+    const step = ["step", ["to-number", ["get", field]], RAMP[0]];
+    s.breaks.forEach((b, i) => step.push(scaled(field, b),
+                                         RAMP[i + 1] || RAMP[RAMP.length - 1]));
+    return ["case", ["has", field], step, NO_DATA];
   }
 
   function colourFor(field) {
-    return field === "zone" ? zoneExpression() : stepExpression(field);
+    return CATEGORICAL[field] ? matchExpression(field) : stepExpression(field);
   }
 
   // ---------------------------------------------------------------- legend
@@ -83,6 +108,18 @@
       row(NO_DATA, "No zone");
       return;
     }
+    if (field === "build_path") {
+      row(PATH_COLOURS["conversion"], "Conversion of the existing building");
+      row(PATH_COLOURS["new build"], "New build on the setback envelope");
+      row(PATH_COLOURS["neither"], "Neither yields a unit");
+      return;
+    }
+    if (field === "garden_suite_storeys") {
+      row(RAMP[0], "None — under 9 m of rear space");
+      row(RAMP[1], "One storey — 9 m or more");
+      row(RAMP[2], "Two storeys — 12.5 m or more");
+      return;
+    }
     const s = SCALES[field];
     const b = s.breaks;
     row(RAMP[0], `under ${b[0]} ${s.unit}`);
@@ -97,10 +134,13 @@
 
   // ---------------------------------------------------------------- detail panel
 
+  const YESNO = v => (Number(v) ? "Yes" : "No");
   const FMT = {
-    corner_lot: v => (Number(v) ? "Yes" : "No"),
-    lane_access: v => (Number(v) ? "Yes" : "No"),
-    on_major_street: v => (Number(v) ? "Yes" : "No"),
+    corner_lot: YESNO,
+    lane_access: YESNO,
+    on_major_street: YESNO,
+    attached: YESNO,
+    new_build_viable: YESNO,
   };
   const PANEL_FIELDS = [
     ["zone", "Zone"],
@@ -109,11 +149,16 @@
     ["area_m2", "Lot area (m²)"],
     ["front_setback_m", "Front setback (m)"],
     ["side_setback_m", "Side setback (m)"],
+    ["side_yards_counted", "Side yards counted"],
+    ["attached", "Attached / party wall"],
     ["rear_setback_m", "Rear setback (m)"],
     ["buildable_width_m", "Buildable width (m)"],
     ["depth_available_m", "Depth available (m)"],
     ["max_coverage_pct", "Max coverage (%)"],
     ["coverage_cap_m2", "Coverage cap (m²)"],
+    ["build_path", "Build path"],
+    ["new_build_viable", "New build viable"],
+    ["existing_footprint_sqft", "Existing footprint (sq ft)"],
     ["building_depth_m", "Building depth (m)"],
     ["max_buildable_footprint_sqft", "Max footprint (sq ft)"],
     ["unit_type", "Unit type"],
@@ -136,7 +181,9 @@
       if (raw === undefined || raw === null || raw === "") {
         v = key === "max_coverage_pct" || key === "coverage_cap_m2" ? "no limit" : "—";
       } else {
-        v = FMT[key] ? FMT[key](raw) : raw;
+        v = FMT[key] ? FMT[key](raw)
+          : TENTHS.has(key) ? unscale(key, Number(raw)).toFixed(1)
+          : raw;
       }
       const dt = document.createElement("dt");
       dt.textContent = label;

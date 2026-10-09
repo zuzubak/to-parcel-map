@@ -52,7 +52,7 @@
  "depth_available_m": {
   "label": "depth_available_m",
   "unit": "m",
-  "desc": "depth_m minus the front and rear yards: the depth available to the MAIN building. The rear yard has already been taken out, and that is where a garden suite goes -- the two do not compete for this space. Sizing a garden suite needs the rear yard left once the main building is placed, which waits on Noam's building depth (17 or 19 m)."
+  "desc": "depth_m minus the front and rear yards: the depth available to the MAIN building. The rear yard has already been taken out, and that is where a garden suite goes -- the two do not compete for this space. What a garden suite actually gets is rear_remaining_m."
  },
  "max_coverage_pct": {
   "label": "max_coverage_pct",
@@ -79,15 +79,40 @@
   "unit": "true/false",
   "desc": "Within 30 m of a Major Street. Major Streets switch townhouses and apartments to a different setback regime (window-dependent side yards), not yet modelled. 5% of lots."
  },
+ "attached": {
+  "label": "attached",
+  "unit": "true/false",
+  "desc": "The building on the lot shares a party wall with its neighbour, or the zone is RS. Detected where one 3D Massing footprint spans two or more parcels. An attached building has one side yard, not two."
+ },
+ "side_yards_counted": {
+  "label": "side_yards_counted",
+  "unit": "count",
+  "desc": "How many side yards came off the frontage: 2 for a detached building, 1 where attached."
+ },
+ "build_path": {
+  "label": "build_path",
+  "unit": "",
+  "desc": "'new build' where a fresh building on the setback envelope beats what is already there; 'conversion' where the existing building is larger and 10.5.20.40 lets it be converted to a fourplex keeping its existing setbacks; 'neither' where no path yields a unit."
+ },
+ "new_build_viable": {
+  "label": "new_build_viable",
+  "unit": "true/false",
+  "desc": "The buildable width reaches the 5.5 m minimum, so a new building could hold a decent unit. Narrower lots can only be converted. An assumption, not by-law."
+ },
+ "existing_footprint_sqft": {
+  "label": "existing_footprint_sqft",
+  "unit": "sq ft",
+  "desc": "The same footprint in square feet."
+ },
  "building_depth_m": {
   "label": "building_depth_m",
   "unit": "m",
-  "desc": "Depth of the main building: the lesser of the depth between the front and rear yards and the depth at which the footprint reaches 1,400 sq ft. Shortened further where a lot coverage cap binds."
+  "desc": "Depth of the building this parcel ends up with. On a new build, the depth that reaches a 900 sq ft footprint, held between 10 and 19 m and never past the rear yard, then shortened where the 1,400 sq ft cap or a lot coverage cap binds. On a conversion, the existing building's depth. The 900 sq ft target and the 10 m floor are assumptions, not by-law."
  },
  "rear_remaining_m": {
   "label": "rear_remaining_m",
   "unit": "m",
-  "desc": "Space left between the back of the main building and the rear setback. This is what a garden suite has to fit into."
+  "desc": "depth_available_m minus building_depth_m: the space left between the back of the building and the rear setback. This is what a garden suite has to fit into, and on a conversion the existing building's depth comes off it just as a new one's would."
  },
  "max_buildable_footprint_sqft": {
   "label": "max_buildable_footprint_sqft",

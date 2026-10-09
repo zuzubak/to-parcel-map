@@ -38,13 +38,24 @@ PARCEL_FIELDS = [
     "buildable_width_m", "depth_available_m",
     "max_coverage_pct", "coverage_cap_m2",
     "corner_lot", "lane_access", "on_major_street",
+    "attached", "side_yards_counted",
     # capacity, from Noam's 2026-10-05 parameters
+    "build_path", "new_build_viable", "existing_footprint_sqft",
     "building_depth_m", "rear_remaining_m", "max_buildable_footprint_sqft",
     "garden_suite_storeys", "unit_type", "n_units",
 ]
-ROUND_1DP = ["frontage_m", "depth_m", "front_setback_m", "side_setback_m", "rear_setback_m",
-             "buildable_width_m", "depth_available_m", "building_depth_m", "rear_remaining_m"]
-ROUND_0DP = ["area_m2", "coverage_cap_m2", "max_buildable_footprint_sqft"]
+# Every numeric field rides as an integer. A double costs 8 bytes in every tile a feature
+# appears in, across six zoom levels and half a million parcels; a small varint costs one or
+# two. TENTHS fields are multiplied by 10 first, so 18.6 m travels as 186 and the browser
+# divides it back -- no precision is lost, because these were already rounded to 1dp.
+# site/map.js has the matching TENTHS list; the two must stay in step.
+TENTHS = ["frontage_m", "depth_m", "front_setback_m", "side_setback_m", "rear_setback_m",
+          "buildable_width_m", "depth_available_m", "building_depth_m", "rear_remaining_m",
+          "max_coverage_pct"]   # 42.5% is a real value on three parcels
+WHOLE = ["area_m2", "coverage_cap_m2", "max_buildable_footprint_sqft",
+         "existing_footprint_sqft",
+         "side_yards_counted", "garden_suite_storeys", "n_units"]
+BOOLS = ["corner_lot", "lane_access", "on_major_street", "attached", "new_build_viable"]
 
 
 def log(m):
@@ -58,6 +69,15 @@ def tippecanoe(src, out, layer, minzoom, maxzoom, extra=()):
     log("  " + " ".join(cmd[:9]) + " ...")
     subprocess.run(cmd, check=True)
     log(f"  -> {out}  {os.path.getsize(out) / 1e6:.0f} MB")
+
+
+def as_int(col):
+    """Round to a Python int, keeping nulls as None so they are written as JSON null and
+    tippecanoe omits the attribute. Object dtype is deliberate: fiona will not serialise
+    pandas' nullable Int64, and a float column would be written as 186.0 and read back as a
+    double, which is the cost we are trying to avoid."""
+    v = pd.to_numeric(col, errors="coerce").round()
+    return [None if pd.isna(x) else int(x) for x in v]
 
 
 def write_ndjson(gdf, path):
@@ -81,17 +101,22 @@ def build_parcels(trreb, tmp, out_dir):
     g = geom.merge(attrs[PARCEL_FIELDS], on="parcel_id", how="inner")
     log(f"  {len(g):,} joined")
 
-    for c in ROUND_1DP:
-        g[c] = g[c].round(1)
-    for c in ROUND_0DP:
-        g[c] = g[c].round(0)
+    for c in TENTHS:
+        g[c] = as_int(g[c] * 10)
+    for c in WHOLE:
+        g[c] = as_int(g[c])
     # booleans ride as plain 0/1 ints -- fiona cannot serialise pandas' nullable Int8,
     # and "True"/"False" strings would bloat every tile
-    for c in ["corner_lot", "lane_access", "on_major_street"]:
+    for c in BOOLS:
         g[c] = g[c].fillna(False).astype(bool).astype("int32")
 
     src = write_ndjson(g.to_crs(4326), os.path.join(tmp, "parcels.geojsonl"))
-    tippecanoe(src, os.path.join(out_dir, "parcels.pmtiles"), "parcels", 11, 16)
+    # GitHub refuses a file over 100 MiB and the parcels land close to it, so the zooms below
+    # 16 are simplified harder than tippecanoe's default of 1. A parcel edge is well under a
+    # pixel at z13, so this is invisible; z16, where the boundaries are actually read, keeps
+    # full detail.
+    tippecanoe(src, os.path.join(out_dir, "parcels.pmtiles"), "parcels", 11, 16,
+               "--simplification=6")
 
 
 def build_footprints(trreb, tmp, out_dir):
