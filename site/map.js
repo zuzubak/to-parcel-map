@@ -326,9 +326,7 @@
 
     map.on("zoomend", updateZoomNote);
 
-    map.on("click", "parcels-fill", (e) => {
-      const f = e.features && e.features[0];
-      if (!f) return;
+    function select(f) {
       clearSelection();
       selectedId = f.id;
       if (selectedId !== undefined && selectedId !== null) {
@@ -337,9 +335,33 @@
       }
       map.setFilter("parcels-selected", ["==", ["get", "parcel_id"], f.properties.parcel_id]);
       showPanel(f.properties);
+    }
+
+    map.on("click", "parcels-fill", (e) => {
+      const f = e.features && e.features[0];
+      if (f) select(f);
     });
     map.on("mouseenter", "parcels-fill", () => { map.getCanvas().style.cursor = "pointer"; });
     map.on("mouseleave", "parcels-fill", () => { map.getCanvas().style.cursor = ""; });
+
+    // Address search. A geocoded point is only a point, so once the map has settled
+    // there, pick the parcel under it and open its panel -- which is what someone
+    // searching an address actually wants to see.
+    if (window.MapSearch) {
+      MapSearch.mount({
+        container: "#search",
+        inputId: "ms-address",
+        placeholder: "e.g. 17 Spring Garden Rd",
+        onSelect: (r) => {
+          map.once("moveend", () => {
+            const pt = map.project([r.lon, r.lat]);
+            const hits = map.queryRenderedFeatures(pt, { layers: ["parcels-fill"] });
+            if (hits.length) select(hits[0]);
+          });
+          map.flyTo({ center: [r.lon, r.lat], zoom: Math.max(map.getZoom(), 18) });
+        }
+      });
+    }
 
     document.getElementById("colour-by").addEventListener("change", (e) => {
       const field = e.target.value;

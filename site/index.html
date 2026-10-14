@@ -21,6 +21,10 @@
 
 <div class="controls">
   <div class="block">
+    <label for="ms-address">Find an address</label>
+    <div id="search"></div>
+  </div>
+  <div class="block">
     <label for="colour-by">Colour parcels by</label>
     <select id="colour-by">
       <!-- The other colourings (lot area, frontage, buildable width, coverage, ground floor
@@ -44,6 +48,7 @@
   Setbacks derived from Zoning By-law 569-2013. Study inputs only — not a capacity estimate.
 </div>
 
+<script src="/map-search.js"></script>
 <script src="https://unpkg.com/pmtiles@3.0.6/dist/pmtiles.js"></script>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="config.js" onerror="window.CARTO_API_KEY=''"></script>

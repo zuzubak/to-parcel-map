@@ -178,3 +178,8 @@ body {
   }
   .credit { display: none; }
 }
+
+/* The address search sits in the controls panel rather than floating over the map,
+   because this map already has a control stack. Widget styling is shared, from
+   /map-search.js. */
+.controls .ms-wrap { margin-top: 2px; }
