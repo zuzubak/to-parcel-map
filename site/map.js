@@ -67,18 +67,11 @@
   // same rounded inputs scripts/toronto_capacity.py uses, so the panel still matches the
   // spreadsheet. MIN_VIABLE_SQFT and the 60 m2 cap mirror that file.
   const MIN_VIABLE_SQFT = 325;
-  const GARDEN_SUITE_MAX_SQFT = 60 * 10.7639;
   const DERIVED = {
     total_gfa_sqft: p => {
       const g = num(p.ground_floor_sqft);
       if (g === null) return null;
       return g >= MIN_VIABLE_SQFT ? 4 * g : 0;   // every level is the ground floor for now
-    },
-    garden_suite_sqft: p => {
-      if (!Number(p.garden_suite_storeys)) return 0;
-      const w = num(p.buildable_width_m), r = num(p.rear_remaining_m);
-      if (w === null || r === null) return null;
-      return Math.round(Math.min(GARDEN_SUITE_MAX_SQFT, Math.max(0, (w / 10) * (r / 10) * 10.7639)));
     },
   };
   function num(v) {
@@ -184,9 +177,9 @@
     ["total_gfa_sqft", "Total floor area (sq ft)"],
     ["sixplex_eligible", "Five/six units permitted"],
     ["unit_type", "Average unit type"],
-    ["rear_remaining_m", "Rear space left (m)"],
+    ["rear_remaining_m", "Rear space to lot line (m)"],
     ["garden_suite_storeys", "Garden suite storeys"],
-    ["garden_suite_sqft", "Garden suite (sq ft)"],
+    ["garden_suite_sqft", "Garden suite GFA (sq ft)"],
     ["n_units", "Units"],
     ["corner_lot", "Corner lot"],
     ["lane_access", "Lane access"],

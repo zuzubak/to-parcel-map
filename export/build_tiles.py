@@ -41,12 +41,13 @@ PARCEL_FIELDS = [
     "attached",
     # capacity. build_path, new_build_viable and side_yards_counted are deliberately out:
     # they are hidden from the panel and the file is 1 MiB under GitHub's 100 MiB limit.
-    # max_buildable_footprint_sqft (identical to ground_floor_sqft), total_gfa_sqft,
-    # garden_suite_sqft and existing_footprint_sqft are all left out and rebuilt in the
-    # browser: each numeric field costs about 4 MiB across six zoom levels, and the file
-    # has to stay under GitHub's 100 MiB.
+    # max_buildable_footprint_sqft (identical to ground_floor_sqft), total_gfa_sqft and
+    # existing_footprint_sqft are left out and rebuilt in the browser: each numeric field
+    # costs about 4 MiB across six zoom levels and the file must stay under GitHub's
+    # 100 MiB. garden_suite_sqft is back in, because the suite envelope is now a real
+    # calculation rather than something the page can redo from two other fields.
     "building_depth_m", "rear_remaining_m",
-    "ground_floor_sqft",
+    "ground_floor_sqft", "garden_suite_sqft",
     "garden_suite_storeys", "sixplex_eligible", "unit_type", "n_units",
 ]
 # Every numeric field rides as an integer. A double costs 8 bytes in every tile a feature
@@ -57,7 +58,7 @@ PARCEL_FIELDS = [
 TENTHS = ["frontage_m", "depth_m", "front_setback_m", "side_setback_m", "rear_setback_m",
           "buildable_width_m", "depth_available_m", "building_depth_m", "rear_remaining_m",
           "max_coverage_pct"]   # 42.5% is a real value on three parcels
-WHOLE = ["area_m2", "coverage_cap_m2", "ground_floor_sqft",
+WHOLE = ["area_m2", "coverage_cap_m2", "ground_floor_sqft", "garden_suite_sqft",
          "garden_suite_storeys", "n_units"]
 BOOLS = ["corner_lot", "lane_access", "on_major_street", "attached", "sixplex_eligible"]
 
@@ -147,7 +148,7 @@ def build_columns(trreb, out_dir):
     by_name = {n: {"label": n, "unit": u, "desc": d} for n, _, u, d, _ in COLUMNS}
     # the fields the browser reconstructs are not in the tiles but are in the panel, so
     # they still need their labels and descriptions
-    DERIVED_IN_PANEL = ["total_gfa_sqft", "garden_suite_sqft"]
+    DERIVED_IN_PANEL = ["total_gfa_sqft"]
     out = {c: by_name.get(c, {"label": c, "unit": "", "desc": ""})
            for c in list(PARCEL_FIELDS) + DERIVED_IN_PANEL}
     p = os.path.join(out_dir, "columns.json")

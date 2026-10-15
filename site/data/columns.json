@@ -47,7 +47,7 @@
  "buildable_width_m": {
   "label": "buildable_width_m",
   "unit": "m",
-  "desc": "frontage_m minus two side yards. The width available to a building. Does not yet account for the wider flankage setback on corner lots."
+  "desc": "frontage_m minus the side yards: two where the building is detached, one where it has a party wall, and on a qualifying RD corner lot the 3.0 m flankage yard in place of one of them."
  },
  "depth_available_m": {
   "label": "depth_available_m",
@@ -87,22 +87,27 @@
  "building_depth_m": {
   "label": "building_depth_m",
   "unit": "m",
-  "desc": "Depth of the building this parcel ends up with. On a new build, the depth that reaches a 975 sq ft footprint, held between 10 and 19 m and never past the rear yard, then shortened where the 1,400 sq ft cap or a lot coverage cap binds. On a conversion, the existing building's depth. The 900 sq ft target and the 10 m floor are assumptions, not by-law."
+  "desc": "Depth of the building this parcel ends up with. On a new build, the depth that reaches a 975 sq ft footprint, held under the by-law ceiling of 17 m -- 19 m only for a houseplex on a deep lot, meaning depth 36 m or more with frontage under 10 m, or depth 40 m or more with frontage 10 m or over (D1 T04/T05), held between 10 and 19 m and never past the rear yard, then shortened where the 1,400 sq ft cap or a lot coverage cap binds. On a conversion, the existing building's depth. The 900 sq ft target and the 10 m floor are assumptions, not by-law."
  },
  "rear_remaining_m": {
   "label": "rear_remaining_m",
   "unit": "m",
-  "desc": "depth_available_m minus building_depth_m: the space left between the back of the building and the rear setback. This is what a garden suite has to fit into, and on a conversion the existing building's depth comes off it just as a new one's would."
+  "desc": "Distance from the back of the main building to the REAR LOT LINE: lot depth less the front yard and the building. The rear yard is NOT subtracted, because that is exactly where a garden suite sits -- D1 T17/T18 measure the triggers to the lot line. Taking it off the rear setback line instead suppressed 216,000 suites."
  },
  "ground_floor_sqft": {
   "label": "ground_floor_sqft",
   "unit": "sq ft",
   "desc": "Footprint of every floor. On a conversion this is the existing building; on a new build it is the setback envelope. The step-back on wide conversions -- upper floors pulling in to the as-of-right envelope -- is switched off pending Noam, so all four levels are taken at this area."
  },
+ "garden_suite_sqft": {
+  "label": "garden_suite_sqft",
+  "unit": "sq ft",
+  "desc": "GROSS FLOOR AREA of the garden suite, across both storeys where it has two. The envelope is the depth left to the rear lot line once the separation (4.0 m at one storey, 7.5 m at two) and the suite's own rear yard are taken, by the width between its side yards (the greater of 1.5 m or 10% of frontage, capped at 3.0 m). Capped at 60 m2 for one storey and 120 m2 for two, and never larger than the main building."
+ },
  "garden_suite_storeys": {
   "label": "garden_suite_storeys",
   "unit": "storeys",
-  "desc": "0, 1 or 2. One storey needs 9 m of rear space, two storeys 12.5 m. A garden suite does not count against lot coverage, and counts as one unit whichever its height."
+  "desc": "0, 1 or 2, from rear_remaining_m: 9.0 m for one storey, 12.5 m for two, or 14.15 m for two on a lot deeper than 45 m. Each is built from by-law parts -- separation from the main building, 3.5 m of suite, and the suite's own rear yard. Set to 0 where the suite would be under 3.5 m deep, and where a sixplex has already filled the lot's 6-unit cap (T20). One unit whatever its height."
  },
  "sixplex_eligible": {
   "label": "sixplex_eligible",
@@ -123,10 +128,5 @@
   "label": "total_gfa_sqft",
   "unit": "sq ft",
   "desc": "Floor area of the main building across the levels that hold a unit, each at ground_floor_sqft."
- },
- "garden_suite_sqft": {
-  "label": "garden_suite_sqft",
-  "unit": "sq ft",
-  "desc": "Footprint of the garden suite: the rear yard it has to sit in, capped at 60 m2. 0 where none fits."
  }
 }
