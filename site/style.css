@@ -183,3 +183,9 @@ body {
    because this map already has a control stack. Widget styling is shared, from
    /map-search.js. */
 .controls .ms-wrap { margin-top: 2px; }
+
+/* Citywide unit tally, as on the regional map: right-aligned tabular figures, total ruled off. */
+.tally { width: 100%; border-collapse: collapse; font-size: 11px; }
+.tally td { padding: 2px 0; }
+.tally td.n { text-align: right; font-variant-numeric: tabular-nums; }
+.tally tr.tot td { border-top: 1px solid #ddd; padding-top: 4px; font-weight: 600; }

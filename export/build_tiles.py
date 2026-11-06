@@ -49,7 +49,13 @@ PARCEL_FIELDS = [
     "building_depth_m", "rear_remaining_m",
     "ground_floor_sqft", "garden_suite_sqft",
     "garden_suite_storeys", "sixplex_eligible", "unit_type", "n_units",
+    # null off the few percent of lots where a major-street apartment wins, so it costs
+    # next to nothing in the tiles
+    "units_major_street_apt",
 ]
+# What the sidebar tally adds up, written to totals.json at build time.
+TOTALS = [("multiplex", "units_multiplex"), ("garden_suites", "units_garden_suite"),
+          ("major_street_apts", "units_major_street_apt")]
 # Every numeric field rides as an integer. A double costs 8 bytes in every tile a feature
 # appears in, across six zoom levels and half a million parcels; a small varint costs one or
 # two. TENTHS fields are multiplied by 10 first, so 18.6 m travels as 186 and the browser
@@ -59,7 +65,7 @@ TENTHS = ["frontage_m", "depth_m", "front_setback_m", "side_setback_m", "rear_se
           "buildable_width_m", "depth_available_m", "building_depth_m", "rear_remaining_m",
           "max_coverage_pct"]   # 42.5% is a real value on three parcels
 WHOLE = ["area_m2", "coverage_cap_m2", "ground_floor_sqft", "garden_suite_sqft",
-         "garden_suite_storeys", "n_units"]
+         "garden_suite_storeys", "n_units", "units_major_street_apt"]
 BOOLS = ["corner_lot", "lane_access", "on_major_street", "attached", "sixplex_eligible"]
 
 
@@ -105,6 +111,14 @@ def build_parcels(trreb, tmp, out_dir):
 
     g = geom.merge(attrs[PARCEL_FIELDS], on="parcel_id", how="inner")
     log(f"  {len(g):,} joined")
+
+    # the tally counts the modelled table, not the joined tiles: a parcel with no geometry
+    # still has units
+    totals = {k: int(attrs[c].sum()) for k, c in TOTALS}
+    totals.update(units=int(attrs.n_units.sum()), parcels=int(len(attrs)))
+    json.dump(totals, open(os.path.join(out_dir, "totals.json"), "w"), indent=1)
+    log(f"  totals.json: {totals}")
+    g["units_major_street_apt"] = g.units_major_street_apt.where(g.units_major_street_apt > 0)
 
     for c in TENTHS:
         g[c] = as_int(g[c] * 10)

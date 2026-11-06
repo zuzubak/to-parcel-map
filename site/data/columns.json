@@ -37,7 +37,7 @@
  "side_setback_m": {
   "label": "side_setback_m",
   "unit": "m",
-  "desc": "Required side yard, houseplex rates. R and RT 0.9 m; RD banded on req_frontage_m from 0.6 to 3.0 m; RS banded 0.6 to 1.5 m; RM 1.2 m. Blank in non-residential zones."
+  "desc": "Required side yard, houseplex rates. R and RT 0.9 m; RD banded on req_frontage_m from 0.6 to 3.0 m; RS banded 0.6 to 1.5 m; RM 1.2 m detached and 1.5 m where attached, since a semi or semi houseplex takes the wider yard. Blank in non-residential zones. The 0.45 m allowed in R and RT for a wall with no windows is not used."
  },
  "rear_setback_m": {
   "label": "rear_setback_m",
@@ -77,7 +77,7 @@
  "on_major_street": {
   "label": "on_major_street",
   "unit": "true/false",
-  "desc": "Within 30 m of a Major Street. Major Streets switch townhouses and apartments to a different setback regime (window-dependent side yards), not yet modelled. 5% of lots."
+  "desc": "Abuts a Major Street: the lot comes within 25 m of the street's centreline with no other parcel in between, which takes in fronting, flanking and reverse-frontage lots. This is the By-law 608-2024 test for a small apartment building; see units_major_street_apt. Expressways and ramps (Gardiner, DVP, Allen Road, Highway 2A) are left out."
  },
  "attached": {
   "label": "attached",
@@ -122,7 +122,12 @@
  "n_units": {
   "label": "n_units",
   "unit": "units",
-  "desc": "n_units_main plus one where a garden suite fits."
+  "desc": "Units on the lot: units_multiplex + units_garden_suite + units_major_street_apt. Only one path is built, so either the first two or the last are zero."
+ },
+ "units_major_street_apt": {
+  "label": "units_major_street_apt",
+  "unit": "units",
+  "desc": "Units in a small apartment building on a lot abutting a major street, where it beats the multiplex and garden suite together: six storeys on a 25 m long envelope (stepping in 7.5 m from each side past 25 m on lots over 20 m wide), 1.8 m side yards, 7.5 m rear, 50% coverage, 30% circulation, 700 sq ft units, at most 10."
  },
  "total_gfa_sqft": {
   "label": "total_gfa_sqft",

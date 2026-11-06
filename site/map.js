@@ -71,6 +71,8 @@
     total_gfa_sqft: p => {
       const g = num(p.ground_floor_sqft);
       if (g === null) return null;
+      // a major-street apartment is six storeys of its floor plate; a multiplex four levels
+      if (num(p.units_major_street_apt)) return 6 * g;
       return g >= MIN_VIABLE_SQFT ? 4 * g : 0;   // every level is the ground floor for now
     },
   };
@@ -180,10 +182,11 @@
     ["rear_remaining_m", "Rear space to lot line (m)"],
     ["garden_suite_storeys", "Garden suite storeys"],
     ["garden_suite_sqft", "Garden suite GFA (sq ft)"],
+    ["units_major_street_apt", "Major-street apartment units"],
     ["n_units", "Units"],
     ["corner_lot", "Corner lot"],
     ["lane_access", "Lane access"],
-    ["on_major_street", "On major street"],
+    ["on_major_street", "Abuts a major street"],
   ];
 
   function showPanel(props) {
@@ -245,10 +248,24 @@
 
   // ---------------------------------------------------------------- init
 
+  // Citywide units by what builds them, from totals.json (written with the tiles).
+  async function renderTally() {
+    let t;
+    try { t = await (await fetch("data/totals.json")).json(); } catch (e) { return; }
+    const n = v => (v || 0).toLocaleString();
+    const rows = [["Multiplex", t.multiplex], ["Garden suites", t.garden_suites],
+                  ["Major-street apts", t.major_street_apts]];
+    document.querySelector("#tally tbody").innerHTML =
+      rows.map(([l, v]) => "<tr><td>" + l + "</td><td class='n'>" + n(v) + "</td></tr>").join("") +
+      "<tr class='tot'><td>Total</td><td class='n'>" + n(t.units) + "</td></tr>";
+    document.getElementById("tally-block").hidden = false;
+  }
+
   async function init() {
     try {
       columns = await (await fetch("data/columns.json")).json();
     } catch (e) { /* labels fall back to the hardcoded ones */ }
+    renderTally();
 
     const protocol = new pmtiles.Protocol();
     maplibregl.addProtocol("pmtiles", protocol.tile);
